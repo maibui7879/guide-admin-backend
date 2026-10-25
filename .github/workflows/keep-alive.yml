@@ -4,18 +4,20 @@ on:
     # Every ten minutes, away from the start of the hour (UTC).
     - cron: '7,17,27,37,47,57 * * * *'
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/keep-alive.yml']
 permissions: {}
 concurrency:
   group: staging-api-keep-alive
   cancel-in-progress: false
 jobs:
   ping:
-    # Repository variable; no deployment environment approval or secrets needed.
-    if: ${{ vars.KEEPALIVE_API_ORIGIN != '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
-      KEEPALIVE_API_ORIGIN: ${{ vars.KEEPALIVE_API_ORIGIN }}
+      # Public deployment URL; a repository variable can override it.
+      KEEPALIVE_API_ORIGIN: ${{ vars.KEEPALIVE_API_ORIGIN || 'https://guide-admin-backend.onrender.com' }}
     steps:
       - uses: actions/setup-node@v4
         with:

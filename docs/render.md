@@ -28,6 +28,6 @@ Before deploying, confirm migrations are applied to the target database. The API
 
 Check `/health/live` and `/health/ready` after deployment. Run the real storage and staging verification commands described in [staging](staging.md). Never store uploaded images or backups on Render's ephemeral filesystem.
 
-In the GitHub repository, add the **repository Actions variable** `KEEPALIVE_API_ORIGIN=https://<service>.onrender.com`. Run **Actions > Keep staging API awake > Run workflow** once. Its best-effort schedule then pings `/health/live` every ten minutes. It needs no database or storage credentials. This does not guarantee uptime or run the background worker.
+The keep-alive workflow defaults to `https://guide-admin-backend.onrender.com`. For a different service, add the **repository Actions variable** `KEEPALIVE_API_ORIGIN=https://<service>.onrender.com`. A workflow update pushed to `main` triggers an immediate ping; **Actions > Keep staging API awake > Run workflow** can also run it manually. Its best-effort schedule pings `/health/live` every ten minutes. It needs no database or storage credentials. Disable the workflow in Actions to stop pings. This does not guarantee uptime or run the background worker.
 
 Pushing this repository does not create a Render service or provision a Storage bucket. Configure those resources and verify their current free-plan quotas in the provider dashboards before enabling them.

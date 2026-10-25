@@ -39,9 +39,9 @@ Current prerequisites still required from the operator: hosting account/target, 
 To activate after the API has been deployed:
 
 1. Push the workflow onto the GitHub repository's default branch.
-2. In **Settings > Secrets and variables > Actions > Variables**, add the **repository** variable `KEEPALIVE_API_ORIGIN`, for example `https://your-service.onrender.com`. Use the origin only, without `/health/live`, credentials or query parameters. This is separate from environment-scoped staging verification variables.
-3. Open **Actions > Keep staging API awake > Run workflow** and confirm a successful liveness ping. Subsequent scheduled runs are automatic. Without the variable the job is skipped; removing it stops future pings.
+2. The workflow defaults to `https://guide-admin-backend.onrender.com`. To override it, in **Settings > Secrets and variables > Actions > Variables**, add the **repository** variable `KEEPALIVE_API_ORIGIN`. Use the origin only, without `/health/live`, credentials or query parameters. This is separate from environment-scoped staging verification variables.
+3. A push changing the workflow on `main` triggers an immediate ping. You can also open **Actions > Keep staging API awake > Run workflow** and confirm success. Subsequent scheduled runs are automatic. To stop pings, disable the workflow in Actions; removing the override variable restores the default URL.
 
 [GitHub scheduled workflows](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule) can be delayed or dropped under load, only run from the default branch and are automatically disabled in public repositories after 60 days without repository activity. This is best-effort keep-alive, not an uptime guarantee. Around 4,320 runs occur in a 30-day month; check Actions usage/billing limits, particularly for a private repository. If reliable timing or Actions quota is a concern, an external HTTP scheduler can call the same public `/health/live` endpoint every ten minutes instead.
 
-The local workflow file does not activate a remote schedule by itself. A deployed API URL, GitHub remote and the repository variable are still required.
+The schedule becomes active once this workflow is pushed onto the GitHub default branch with Actions enabled. A local workflow file alone does not activate a remote schedule.
