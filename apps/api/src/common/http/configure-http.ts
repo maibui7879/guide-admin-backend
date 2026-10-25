@@ -48,7 +48,8 @@ export function configureHttp(app: INestApplication, env: Environment): void {
   });
   app.use(helmet());
   app.enableCors({
-    origin: env.CORS_ORIGINS,
+    // Reflect each caller in wildcard mode so credentialed browser requests remain valid.
+    origin: env.CORS_ORIGINS.includes('*') ? true : env.CORS_ORIGINS,
     credentials: true,
     exposedHeaders: ['X-Request-Id', 'Retry-After'],
   });

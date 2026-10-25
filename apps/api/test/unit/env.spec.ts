@@ -33,13 +33,26 @@ describe('environment boundary', () => {
     { PORT: '0' },
     { DATABASE_URL: 'https://example.com' },
     { SESSION_SECRET: 'short' },
-    { CORS_ORIGINS: '*' },
+    { CORS_ORIGINS: '*,https://example.com' },
   ])('rejects unsafe configuration %j', (invalid) => {
     expect(() => parseEnvironment({ ...fixture, ...invalid })).toThrow('Invalid environment');
   });
   it('does not leak configuration values', () => {
     expect(() => parseEnvironment({ ...fixture, DATABASE_URL: 'secret-value' })).toThrow(
       'Invalid environment: DATABASE_URL',
+    );
+  });
+  it('allows explicitly configured wildcard CORS in production while retaining HTTPS for API origin', () => {
+    const env = {
+      ...fixture,
+      NODE_ENV: 'production',
+      API_ORIGIN: 'https://api.example.com',
+      CORS_ORIGINS: '*',
+      STORAGE_ENDPOINT: 'https://storage.example.com',
+    };
+    expect(parseEnvironment(env).CORS_ORIGINS).toEqual(['*']);
+    expect(() => parseEnvironment({ ...env, API_ORIGIN: 'http://localhost:3000' })).toThrow(
+      'production origins require HTTPS',
     );
   });
 });

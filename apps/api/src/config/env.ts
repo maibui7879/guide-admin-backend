@@ -30,14 +30,15 @@ const schema = z.object({
     )
     .refine(
       (v) =>
-        v.length > 0 &&
-        v.every((s) => {
-          try {
-            return new URL(s).origin === s;
-          } catch {
-            return false;
-          }
-        }),
+        (v.length === 1 && v[0] === '*') ||
+        (v.length > 0 &&
+          v.every((s) => {
+            try {
+              return new URL(s).origin === s;
+            } catch {
+              return false;
+            }
+          })),
     ),
   STORAGE_ENDPOINT: z.url(),
   STORAGE_BUCKET: z.string().min(1),
@@ -66,7 +67,9 @@ export function parseEnvironment(input: NodeJS.ProcessEnv): Environment {
     throw new Error('Invalid environment: session idle lifetime exceeds absolute lifetime');
   if (
     result.data.NODE_ENV === 'production' &&
-    [result.data.API_ORIGIN, ...result.data.CORS_ORIGINS].some((v) => !v.startsWith('https://'))
+    [result.data.API_ORIGIN, ...result.data.CORS_ORIGINS.filter((origin) => origin !== '*')].some(
+      (v) => !v.startsWith('https://'),
+    )
   )
     throw new Error('Invalid environment: production origins require HTTPS');
   if (result.data.NODE_ENV === 'production' && result.data.SESSION_SECRET.startsWith('replace-')) {
