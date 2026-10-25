@@ -1,0 +1,17 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+!.env.staging.example
+*.tsbuildinfo
+*.log
+.pnpm-store/
+__pycache__/
+*.py[cod]
+.cache/
+
+.data/
+
+apps/web/editor/editor.bundle.js

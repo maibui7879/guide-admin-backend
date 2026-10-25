@@ -1,0 +1,82 @@
+{
+  "name": "@atlas/api",
+  "private": true,
+  "scripts": {
+    "dev": "node --watch -r ts-node/register src/main.ts",
+    "build": "tsc -p tsconfig.build.json && node -e \"require('node:fs').cpSync('src/database/fixtures','dist/database/fixtures',{recursive:true})\"",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "openapi:export": "node -r ts-node/register src/cli/export-openapi.ts",
+    "admin:bootstrap": "node -r ts-node/register src/cli/bootstrap-admin.ts",
+    "lint": "eslint src test",
+    "test": "jest --runInBand --testPathPatterns=unit",
+    "test:e2e": "node -r ts-node/register test/run-e2e.ts",
+    "migration:run": "typeorm-ts-node-commonjs migration:run -d src/database/data-source.ts",
+    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
+    "migration:check": "node -r ts-node/register src/cli/check-migrations.ts",
+    "seed": "node -r ts-node/register src/cli/seed.ts",
+    "seed:refresh": "node -r ts-node/register src/cli/refresh-character-fixture.ts",
+    "worker:dev": "node -r ts-node/register src/cli/worker.ts",
+    "worker": "node dist/cli/worker.js",
+    "ops:prune": "node -r ts-node/register src/cli/prune-operational-data.ts",
+    "search:explain": "node -r ts-node/register src/cli/explain-search.ts",
+    "migration:run:prod": "node dist/cli/migrate.js",
+    "admin:bootstrap:prod": "node dist/cli/bootstrap-admin.js",
+    "media:inventory": "node -r ts-node/register src/cli/media-inventory.ts",
+    "storage:verify": "node --env-file=../../.env.staging -r ts-node/register src/cli/verify-storage.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1156.0",
+    "@nestjs/common": "^11.1.0",
+    "@nestjs/core": "^11.1.0",
+    "@nestjs/platform-express": "^11.1.0",
+    "@nestjs/swagger": "^11.2.0",
+    "bullmq": "5.61.2",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "ioredis": "5.8.2",
+    "pg": "^8.16.0",
+    "pino": "^10.1.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "sharp": "0.35.5",
+    "typeorm": "^0.3.27",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@nestjs/testing": "^11.1.0",
+    "@types/express": "^5.0.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.0.0",
+    "@types/supertest": "^6.0.3",
+    "eslint": "^9.39.0",
+    "jest": "^30.2.0",
+    "supertest": "^7.1.0",
+    "ts-jest": "^29.4.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.46.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "tsconfig": "tsconfig.json"
+        }
+      ]
+    },
+    "testMatch": [
+      "<rootDir>/test/**/*.spec.ts"
+    ]
+  },
+  "files": [
+    "dist"
+  ]
+}

@@ -1,0 +1,7 @@
+packages:
+  - apps/*
+onlyBuiltDependencies:
+  - '@nestjs/core'
+overrides:
+  '@nestjs/platform-express>multer': 2.5.0
+  '@nestjs/swagger>js-yaml': 5.4.1

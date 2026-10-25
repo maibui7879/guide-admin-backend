@@ -1,0 +1,8 @@
+node_modules/
+**/dist/
+coverage/
+demo-ui/
+docs/openapi.json
+.env
+.env.*
+pnpm-lock.yaml

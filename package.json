@@ -1,0 +1,43 @@
+{
+  "name": "stella-atlas",
+  "private": true,
+  "engines": {
+    "node": ">=24.7.0"
+  },
+  "packageManager": "pnpm@10.20.0",
+  "scripts": {
+    "dev": "pnpm --filter @atlas/api dev",
+    "dev:web": "pnpm --filter @atlas/web dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "openapi:export": "pnpm --filter @atlas/api openapi:export",
+    "admin:bootstrap": "pnpm --filter @atlas/api admin:bootstrap",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write \"apps/api/src/**/*.ts\" \"apps/api/test/**/*.ts\" \"apps/api/*.json\" \"apps/api/*.mjs\" package.json .prettierrc.json lint-staged.config.mjs \"scripts/*.mjs\" \".husky/*.mjs\"",
+    "format:check": "prettier --check \"apps/api/src/**/*.ts\" \"apps/api/test/**/*.ts\" \"apps/api/*.json\" \"apps/api/*.mjs\" package.json .prettierrc.json lint-staged.config.mjs \"scripts/*.mjs\" \".husky/*.mjs\"",
+    "test": "pnpm -r test",
+    "test:e2e": "pnpm --filter @atlas/api test:e2e",
+    "migration:run": "pnpm --filter @atlas/api migration:run",
+    "migration:revert": "pnpm --filter @atlas/api migration:revert",
+    "migration:check": "pnpm --filter @atlas/api migration:check",
+    "seed": "pnpm --filter @atlas/api seed",
+    "prepare": "node .husky/install.mjs",
+    "precommit": "node scripts/pre-commit.mjs",
+    "seed:refresh": "pnpm --filter @atlas/api seed:refresh",
+    "worker:dev": "pnpm --filter @atlas/api worker:dev",
+    "ops:prune": "pnpm --filter @atlas/api ops:prune",
+    "search:explain": "pnpm --filter @atlas/api search:explain",
+    "benchmark:api": "node scripts/benchmark-api.mjs",
+    "backup:db": "node scripts/backup-db.mjs backup",
+    "backup:restore-test": "node scripts/backup-db.mjs restore-test",
+    "build:api": "pnpm --filter @atlas/api build",
+    "media:inventory": "pnpm --filter @atlas/api media:inventory",
+    "staging:verify": "node --env-file=.env.staging scripts/verify-staging.mjs",
+    "storage:verify": "pnpm --filter @atlas/api storage:verify"
+  },
+  "devDependencies": {
+    "husky": "9.1.7",
+    "lint-staged": "16.2.7",
+    "prettier": "3.6.2"
+  }
+}

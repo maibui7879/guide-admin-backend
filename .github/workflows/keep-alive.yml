@@ -1,0 +1,62 @@
+name: Keep staging API awake
+on:
+  schedule:
+    # Every ten minutes, away from the start of the hour (UTC).
+    - cron: '7,17,27,37,47,57 * * * *'
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: staging-api-keep-alive
+  cancel-in-progress: false
+jobs:
+  ping:
+    # Repository variable; no deployment environment approval or secrets needed.
+    if: ${{ vars.KEEPALIVE_API_ORIGIN != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      KEEPALIVE_API_ORIGIN: ${{ vars.KEEPALIVE_API_ORIGIN }}
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Ping liveness without querying the database
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          async function ping() {
+            const origin = new URL(process.env.KEEPALIVE_API_ORIGIN);
+            if (origin.protocol !== 'https:' || origin.username || origin.password ||
+                origin.search || origin.hash || origin.pathname !== '/') {
+              throw new Error('Expected a plain HTTPS origin');
+            }
+            const url = new URL('/health/live', origin);
+            for (let attempt = 1; attempt <= 3; attempt++) {
+              try {
+                const response = await fetch(url, {
+                  redirect: 'manual',
+                  signal: AbortSignal.timeout(75000),
+                  headers: { 'User-Agent': 'Stella-Atlas-KeepAlive', 'Cache-Control': 'no-cache' },
+                });
+                if (response.status !== 200) {
+                  await response.body?.cancel();
+                  throw new Error('Liveness unavailable');
+                }
+                const body = await response.json();
+                if (body.status !== 'ok' || !response.headers.get('x-request-id')) {
+                  throw new Error('Unexpected liveness response');
+                }
+                console.log('Liveness ping passed');
+                return;
+              } catch {
+                console.log(`Liveness attempt ${attempt}/3 failed`);
+                if (attempt < 3) await new Promise(resolve => setTimeout(resolve, 5000));
+              }
+            }
+            throw new Error('Liveness retries exhausted');
+          }
+          ping().catch(() => {
+            console.error('::error::Keep-alive failed. Verify the API origin, deployment and HTTPS connectivity.');
+            process.exitCode = 1;
+          });
+          NODE

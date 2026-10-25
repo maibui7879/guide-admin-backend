@@ -1,0 +1,36 @@
+name: Verify configured staging
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 10
+    env:
+      NODE_ENV: production
+      STAGING_API_ORIGIN: ${{ vars.STAGING_API_ORIGIN }}
+      STAGING_WEB_ORIGIN: ${{ vars.STAGING_WEB_ORIGIN }}
+      STAGING_GAME_SLUG: ${{ vars.STAGING_GAME_SLUG }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_BUCKET: ${{ vars.STORAGE_BUCKET }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      STORAGE_ACCESS_KEY: ${{ secrets.STORAGE_ACCESS_KEY }}
+      STORAGE_SECRET_KEY: ${{ secrets.STORAGE_SECRET_KEY }}
+      STORAGE_VERIFY_ALLOW_WRITE: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        env:
+          NODE_ENV: development
+      - run: pnpm build:api
+      - name: Verify private storage with an isolated probe
+        run: node apps/api/dist/cli/verify-storage.js
+      - name: Verify HTTPS API boundaries
+        run: node scripts/verify-staging.mjs

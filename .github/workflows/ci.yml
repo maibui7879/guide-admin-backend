@@ -1,0 +1,90 @@
+name: Backend CI
+on: [push, pull_request]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7.4-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: atlas
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: atlas_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U atlas -d atlas_test"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://atlas:test_password@localhost:5432/atlas_test
+      TEST_DATABASE_URL: postgresql://atlas:test_password@localhost:5432/atlas_test
+      TEST_REDIS_URL: redis://localhost:6379/0
+      BACKUP_TOOL_MODE: docker
+      RESTORE_TEST_DATABASE_URL: postgresql://atlas:test_password@localhost:5432/atlas_restore_ci
+      SESSION_SECRET: ci-only-placeholder-at-least-32-characters
+      CORS_ORIGINS: http://localhost:3001
+      STORAGE_ENDPOINT: http://localhost:9000
+      STORAGE_BUCKET: test
+      STORAGE_REGION: auto
+      STORAGE_ACCESS_KEY: test
+      STORAGE_SECRET_KEY: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --prod --audit-level high
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm typecheck
+      - run: node --test scripts/verify-staging.test.mjs
+      - run: pnpm test
+      - run: pnpm test:e2e
+      - run: pnpm build:api
+      - run: pnpm openapi:export
+      - run: git diff --exit-code -- docs/openapi.json
+      - run: pnpm migration:run
+      - run: pnpm seed
+      - run: pnpm seed
+      - run: pnpm migration:check
+      - run: pnpm backup:db
+      - name: Create empty restore test database
+        run: |
+          node - <<'NODE'
+          const {Client}=require('./apps/api/node_modules/pg');
+          (async()=>{const db=new Client({connectionString:process.env.DATABASE_URL});await db.connect();try{await db.query('CREATE DATABASE atlas_restore_ci TEMPLATE template0');}finally{await db.end();}})().catch(()=>{console.error('Restore test database creation failed');process.exitCode=1;});
+          NODE
+      - name: Verify restore against manifest
+        run: |
+          node - <<'NODE'
+          const fs=require('node:fs'),path=require('node:path'),{spawnSync}=require('node:child_process');
+          const file=fs.readdirSync('.cache/backups').filter(f=>f.endsWith('.dump')).sort().at(-1);
+          if(!file)throw Error('Backup missing');
+          const result=spawnSync(process.execPath,['scripts/backup-db.mjs','restore-test',path.join('.cache/backups',file)],{stdio:'inherit',env:process.env});
+          process.exitCode=result.status??1;
+          NODE
+      - name: Build backend runtime image
+        run: docker build -f apps/api/Dockerfile -t atlas-api-ci .
+      - name: Start packaged backend against CI database
+        run: docker run --detach --name atlas-api-ci --network host --env DATABASE_URL --env SESSION_SECRET --env CORS_ORIGINS --env STORAGE_ENDPOINT --env STORAGE_BUCKET --env STORAGE_REGION --env STORAGE_ACCESS_KEY --env STORAGE_SECRET_KEY --env NODE_ENV=test --env PORT=3008 --env MEDIA_STORAGE_DRIVER=local atlas-api-ci
+      - name: Check packaged backend readiness
+        run: |
+          node - <<'NODE'
+          (async()=>{for(let n=0;n<30;n++){try{const r=await fetch('http://localhost:3008/health/ready',{signal:AbortSignal.timeout(2000)});if(r.ok)return;}catch{}await new Promise(r=>setTimeout(r,1000));}throw Error('Packaged API did not become ready');})().catch(()=>{console.error('Runtime image smoke failed');process.exitCode=1;});
+          NODE
+      - name: Stop CI backend container
+        if: always()
+        run: docker rm --force atlas-api-ci || true
+      - run: git diff --check

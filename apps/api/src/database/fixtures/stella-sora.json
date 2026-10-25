@@ -1,0 +1,12 @@
+{
+  "verifiedAt": "2026-10-24T00:00:00.000Z",
+  "verificationScope": "Name, rarity, element, class and attack type cross-checked against each linked Kaiden profile on 2026-10-24. Artwork paths reuse the demo assets; redistribution rights and voice credits are not newly verified. No skill or stat prose imported.",
+  "characters": [
+    {"slug":"allie","name":"Allie","element":"Aqua","rarity":5,"role":"Vanguard","mechanics":{"attackType":"Melee"}},
+    {"slug":"chitose","name":"Chitose","element":"Aqua","rarity":5,"role":"Vanguard","mechanics":{"attackType":"Melee"}},
+    {"slug":"eleanor","name":"Eleanor","element":"Ventus","rarity":5,"role":"Versatile","mechanics":{"attackType":"Melee"}},
+    {"slug":"firstlight-noya","name":"Firstlight Noya","element":"Lux","rarity":5,"role":"Vanguard","mechanics":{"attackType":"Melee"}},
+    {"slug":"fuyuka","name":"Fuyuka","element":"Ignis","rarity":5,"role":"Vanguard","mechanics":{"attackType":"Melee"}},
+    {"slug":"shia","name":"Shia","element":"Lux","rarity":5,"role":"Vanguard","mechanics":{"attackType":"Ranged"}}
+  ]
+}
